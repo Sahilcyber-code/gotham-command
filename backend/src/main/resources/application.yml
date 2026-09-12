@@ -57,7 +57,7 @@ app:
     cookie:
       name: gotham_refresh_token
       secure: ${REFRESH_COOKIE_SECURE:false}
-      same-site: Lax
+      same-site: ${REFRESH_COOKIE_SAMESITE:Lax}
       path: /api/auth
       max-age-seconds: 604800
 
