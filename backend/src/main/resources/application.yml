@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: gotham-command
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/gotham}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:placeholder-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder-google-client-secret}
+            scope:
+              - openid
+              - profile
+              - email
+            redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://openidconnect.googleapis.com/v1/userinfo
+            user-name-attribute: sub
+
+server:
+  port: ${SERVER_PORT:8080}
+
+jwt:
+  secret: ${JWT_SECRET:change-me-in-production}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  auth:
+    refresh-token-expiration: ${REFRESH_TOKEN_EXPIRATION:604800000}
+    cookie:
+      name: gotham_refresh_token
+      secure: ${REFRESH_COOKIE_SECURE:false}
+      same-site: Lax
+      path: /api/auth
+      max-age-seconds: 604800
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.hibernate.SQL: INFO
