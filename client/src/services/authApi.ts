@@ -21,6 +21,8 @@ export interface TokenResponse {
   expiresAt: string;
 }
 
+let refreshPromise: Promise<TokenResponse> | null = null;
+
 export const authApi = {
   async getMe(): Promise<AuthUser> {
     const response = await api.get<AuthUser>("/auth/me");
@@ -28,11 +30,21 @@ export const authApi = {
   },
 
   async refreshToken(): Promise<TokenResponse> {
-    const response = await api.post<TokenResponse>("/auth/refresh");
-    if (response.data?.accessToken) {
-      setAccessToken(response.data.accessToken);
+    if (!refreshPromise) {
+      refreshPromise = api
+        .post<TokenResponse>("/auth/refresh")
+        .then((response) => {
+          if (response.data?.accessToken) {
+            setAccessToken(response.data.accessToken);
+          }
+          return response.data;
+        })
+        .finally(() => {
+          refreshPromise = null;
+        });
     }
-    return response.data;
+
+    return refreshPromise;
   },
 
   async logout(): Promise<void> {
