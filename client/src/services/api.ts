@@ -1,7 +1,8 @@
 import axios, { type AxiosError, type AxiosRequestConfig } from "axios";
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8081/api";
-export const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8081";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+export const BACKEND_BASE_URL =
+  import.meta.env.VITE_BACKEND_URL || (typeof window !== "undefined" ? window.location.origin : "");
 
 // In-memory access token storage (never placed in localStorage)
 let memoryAccessToken: string | null = null;

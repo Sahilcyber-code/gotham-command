@@ -1,18 +1,33 @@
-FROM node:20-alpine AS build
+# ==========================================
+# Stage 1: Build React/Vite Frontend
+# ==========================================
+FROM node:20-alpine AS frontend-build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY package.json pnpm-lock.yaml ./
 COPY patches/ ./patches/
 RUN pnpm install --frozen-lockfile
 COPY . .
-ARG VITE_API_URL=http://localhost:8080/api
-ARG VITE_BACKEND_URL=http://localhost:8080
-ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+# Build production bundle into dist/public (same-origin relative /api)
 RUN pnpm run build
 
-FROM nginx:alpine
-COPY --from=build /app/dist/public /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 5173
-CMD ["nginx", "-g", "daemon off;"]
+# ==========================================
+# Stage 2: Build Spring Boot Backend with Static Assets
+# ==========================================
+FROM maven:3.9-eclipse-temurin-21 AS backend-build
+WORKDIR /app
+COPY backend/pom.xml .
+RUN mvn dependency:go-offline -B
+COPY backend/src ./src
+# Copy compiled React frontend assets into Spring Boot static resources
+COPY --from=frontend-build /app/dist/public/ ./src/main/resources/static/
+RUN mvn clean package -DskipTests -B
+
+# ==========================================
+# Stage 3: Production Runtime
+# ==========================================
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=backend-build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
