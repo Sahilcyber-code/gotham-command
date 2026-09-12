@@ -3,4 +3,4 @@ dist
 .git
 .jdk
 .maven
-backend
+backend/target
